@@ -1,0 +1,47 @@
+int sum[10];
+int count = 0;
+int test;
+for(test = 9; test > 0; test -= 2)
+{
+     sum[test] = test;
+     sum[test + 1] = test + 1;
+     count--;
+     count--;
+}
+
+sum = 0;
+count = 0;
+int j;
+for(j = 1; j < 9; j += 2)
+{
+     sum += j;
+     sum += j - 1;
+     count++;
+     count++;
+}
+/* Remainding Iterations */
+for(j = 8; j < 9; j += 1)
+{
+     sum += j;
+     count++;
+}
+
+
+int count;
+for(count = 1; count < 10; count += 2)
+{
+     print(count);
+     print(count - 1);
+}
+
+int x;
+for(x = 8; x > 0; x -= 2)
+{
+     sum -= x;
+     sum -= x + 1;
+}
+/* Remainding Iterations */
+for(x = 1; x > 0; x -= 1)
+{
+     sum -= x;
+}

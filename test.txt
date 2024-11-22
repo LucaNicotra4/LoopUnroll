@@ -1,0 +1,26 @@
+int sum[10];
+int count = 0;
+for(int test = 10; test > 0; test--)
+{
+     sum[test] = test;
+     count--;
+}
+
+sum = 0;
+count = 0;
+for(int j = 0; j < 9; j++)
+{
+     sum += j;
+     count++;
+}
+
+
+for(int count = 0 ; count < 10 ; count++)
+{
+     print(count);
+}
+
+for(int x = 9; x > 0; x--)
+{
+     sum -= x;
+}

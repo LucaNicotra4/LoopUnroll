@@ -153,19 +153,81 @@ int getAlterationValue(char *alteration)
           printf("Unrecognized increment.\n");
           return 0;
      }
+     printf("Increment: %d", increment);
      return increment;
 }
 
-void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, int start, char* comparator, int end, char* incrementOp, int increment)
+void forLoopFound(char* forPtr, char* line, int lineNum, int factor, FILE* fp, FILE* optimized)
+{
+     printf("Found for loop on line %d here: %s\n", lineNum, forPtr);
+     /* Piece up loop */
+     /* Chunk 1 (Declaration) */
+     char *datatype = getDataType(line);
+     int start = getStart(line);
+     char *var = getVar(line);
+     //printf("%s = %d\n", var, start);
+     /* Chunk 2 (Condition) */
+     char *comparator = getComparator(line);
+     int end = getEnd(line);
+     //printf("%s %s %d\n", var, comparator, end);
+     /* Chunk 3 (Inc/Dec) */
+     char *alteration = getIncDec(line);
+     //printf("%s%s\n", var, alteration);
+     
+     /* Convert alteration to digit value (positive for increment, negative for decrement) */
+     int increment = getAlterationValue(alteration);
+     char* incrementOp;
+     if(increment >= 0)
+     {
+          incrementOp = "+=";
+     }else{
+          incrementOp = "-=";
+     }
+     if(factor == 0){ //factor of 2
+          unroll(lineNum, fp, optimized, datatype, var, start, comparator, end, incrementOp, increment, factor);
+     }else if(factor == 1){ //factor of 4
+          unroll(lineNum, fp, optimized, datatype, var, start, comparator, end, incrementOp, increment, factor);
+     }else if(factor == 2){ //full unroll
+     }
+}
+
+void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, int start, char* comparator, int end, char* incrementOp, int increment, int factor)
 {
      if(increment < 0) start -= 2; //if increment is negative, ensure that initialized value is dec instead of inc
 
-     fprintf(optimized, "%s %s;\n", datatype, var);
-     fprintf(optimized, "for(%s = %d; %s %s %d; %s %s %d)\n", 
-          var, ++start, var, comparator, end, var, incrementOp, abs((increment*2)));
-     fprintf(optimized, "{\n"); //Beginning of loop
-     printf("Now optimizing: for(%s %s = %d; %s %s %d; %s %s %d)\n",
-          datatype, var, ++start, var, comparator, end, var, incrementOp, abs((increment*2)));
+     if(factor == 0)
+     {
+          fprintf(optimized, "%s %s;\n", datatype, var);
+          fprintf(optimized, "for(%s = %d; %s %s %d; %s %s %d)\n", 
+               var, ++start, var, comparator, end, var, incrementOp, abs((increment*2)));
+          fprintf(optimized, "{\n"); //Beginning of loop
+          printf("Now optimizing: for(%s %s = %d; %s %s %d; %s %s %d)\n",
+               datatype, var, ++start, var, comparator, end, var, incrementOp, abs((increment*2)));
+     }else if(factor == 1)
+     {
+          if(increment >= 0)
+          {
+               start += 3;
+               if((end - start) < 4)
+               {
+                    //fully unroll
+               }
+          }else
+          {
+               start -= 3;
+               if((start - end) < 4)
+               {
+                    //fully unroll
+               }
+          }
+
+          fprintf(optimized, "%s %s;\n", datatype, var);
+          fprintf(optimized, "for(%s = %d; %s %s %d; %s %s %d)\n", 
+               var, start, var, comparator, end, var, incrementOp, abs((increment*4)));
+          fprintf(optimized, "{\n"); //Beginning of loop
+          printf("Now optimizing: for(%s %s = %d; %s %s %d; %s %s %d)\n",
+               datatype, var, start, var, comparator, end, var, incrementOp, abs((increment*4)));
+     }
 
      long startingPoint;
      int checkStart = 1;
@@ -190,7 +252,7 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
                
                if((linePtr = strstr(line, "for")) != NULL) //if another for loop is found
                {
-                    //recursive step??
+                    forLoopFound(linePtr, line, lineNum, 2, fp, optimized);
                }else if((linePtr = strstr(line, "}")) != NULL) //if end of current for loop is reached
                {
                     if((linePtr = strstr(line, "{")) == NULL)
@@ -221,9 +283,35 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
                               if(!isalpha(linePtr[0]) && !isdigit(linePtr[0]))
                               {
                                    /* Print line along with inc/decremented line */
-                                   fprintf(optimized, "%s", line);
-                                   char* incrementedLine = incrementLine(line, var, increment, varIndex);
-                                   fprintf(optimized, "%s", incrementedLine);
+                                   if(factor == 0)
+                                   {
+                                        fprintf(optimized, "%s", line);
+                                        char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                        fprintf(optimized, "%s", incrementedLine);
+                                   }else if(factor == 1)
+                                   {
+                                        if(increment >= 0){
+                                             int temp = increment;
+                                             fprintf(optimized, "%s", line);
+                                             char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             incrementedLine = incrementLine(line, var, ++increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             incrementedLine = incrementLine(line, var, ++increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             increment = temp;
+                                        }else{
+                                             int temp = increment;
+                                             fprintf(optimized, "%s", line);
+                                             char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             incrementedLine = incrementLine(line, var, --increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             incrementedLine = incrementLine(line, var, --increment, varIndex);
+                                             fprintf(optimized, "%s", incrementedLine);
+                                             increment = temp;
+                                        }
+                                   }
                               }
                          }
                     }else{ //duplicate if just another line
@@ -236,9 +324,17 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
      fprintf(optimized, "}\n");
 
      /* Iterate once more if loop has odd number of iterations */
-     if(abs((end - start))%2 == 0) return;
+     int newStart;
+     if(factor == 0)
+     {
+          if(abs((end - start))%2 == 0) return;
+          newStart = end - ((end - start) % 2);
+     }else if(factor == 1)
+     {
+          if(abs((end - start))%4 == 0) return;
+          newStart = end - ((end - start) % 4);
+     }
      long setBack = ftell(fp) - startingPoint;
-     int newStart = end - ((end - start) % 2);
      char newIncrementOp;
      fseek(fp, -(ftell(fp) - startingPoint), SEEK_CUR); //pushes pointer back to beginning of for loop for reiteration
      if(increment >= 0)

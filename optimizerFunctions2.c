@@ -3,6 +3,7 @@
 /* Returns a line with the looping variable being incremented / decremented by the given increment */
 char* incrementLine(char* line, char* var, int increment, int varIndex)
 {
+     printf("Increment in inc: %d\n", increment);
      char* ptr = line;
      size_t buffer_size = strlen(line)+10;
      size_t length = 0;

@@ -21,6 +21,9 @@ char* getVar(const char*);
 char* getComparator(const char*);
 int getEnd(char*);
 char* getIncDec(const char*);
+int getAlterationValue(char*);
+void forLoopFound(char*, char*, int, int, FILE*, FILE*);
+void unrollBy2(int, FILE*, FILE*, char*, char*, int, char*, int, char*, int, int);
 
 /* Define Comparators */
 #define LESS_THAN 0
@@ -75,41 +78,7 @@ int main(int argc, char *argv[])
                     /* If a for loop is found */
                     if((forPtr = strstr(line, "for")) != NULL)
                     {
-                         printf("Found for loop on line %d here: %s\n", lineNum, forPtr);
-                         /* Piece up loop */
-                         /* Chunk 1 (Declaration) */
-                         char *datatype = getDataType(line);
-                         int start = getStart(line);
-                         char *var = getVar(line);
-                         //printf("%s = %d\n", var, start);
-
-                         /* Chunk 2 (Condition) */
-                         char *comparator = getComparator(line);
-                         int end = getEnd(line);
-                         //printf("%s %s %d\n", var, comparator, end);
-
-                         /* Chunk 3 (Inc/Dec) */
-                         char *alteration = getIncDec(line);
-                         //printf("%s%s\n", var, alteration);
-                         
-                         /* Convert alteration to digit value (positive for increment, negative for decrement) */
-                         int increment = getAlterationValue(alteration);
-                         char* incrementOp;
-                         if(increment >= 0)
-                         {
-                              incrementOp = "+=";
-                         }else{
-                              incrementOp = "-=";
-                         }
-
-                         if(factor == 0){ //factor of 2
-                              unrollBy2(lineNum, fp, optimized, datatype, var, start, comparator, end, incrementOp, increment);
-                              //printf("Start: %d", start);
-                         }else if(factor == 1){ //factor of 4
-
-                         }else if(factor == 2){ //full unroll
-
-                         }
+                         forLoopFound(forPtr, line, lineNum, factor, fp, optimized);
                     }else
                     {
                          //if not a for loop, just copy line

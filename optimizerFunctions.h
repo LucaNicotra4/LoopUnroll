@@ -15,6 +15,7 @@ char* getComparator(const char*);
 int getEnd(char*);
 char* getIncDec(const char*);
 int getAlterationValue(char*);
-void unrollBy2(int, FILE*, FILE*, char*, char*, int, char*, int, char*, int);
+void forLoopFound(char*, char*, int, int, FILE*, FILE*);
+void unroll(int, FILE*, FILE*, char*, char*, int, char*, int, char*, int, int);
 
 #endif

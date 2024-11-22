@@ -185,16 +185,7 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
                if(checkStart == 1)
                {
                     startingPoint = ftell(fp);
-                    printf("Starting point: %s / %lu\n", line, startingPoint);
                     checkStart = 0;
-               }else if(checkStart == 0)
-               {
-                    printf("Second it: %s", line);
-                    checkStart--;
-               }else if(checkStart == -1)
-               {
-                    printf("Third it: %s", line);
-                    checkStart--;
                }
                
                if((linePtr = strstr(line, "for")) != NULL) //if another for loop is found
@@ -245,17 +236,11 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
      fprintf(optimized, "}\n");
 
      /* Iterate once more if loop has odd number of iterations */
-     printf("Checking odd: %d\n", abs((end - start)));
      if(abs((end - start))%2 == 0) return;
-     printf("ODD\n");
-     printf("bytes: %lu / starting point: %lu\n", ftell(fp), startingPoint);
-     //fseek(fp, -(SEEK_CUR - startingPoint), SEEK_CUR);
      long setBack = ftell(fp) - startingPoint;
-     fseek(fp, -(ftell(fp) - startingPoint), SEEK_CUR);
-     printf("bytes: %lu\n", ftell(fp));
-
      int newStart = end - ((end - start) % 2);
      char newIncrementOp;
+     fseek(fp, -(ftell(fp) - startingPoint), SEEK_CUR); //pushes pointer back to beginning of for loop for reiteration
      if(increment >= 0)
      {
           newIncrementOp = '+';
@@ -263,12 +248,13 @@ void unrollBy2(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var
      {
           newIncrementOp = '-';
      }
+
+     /* Create for loop with remaining number of iterations and reiterate through loop */
      fprintf(optimized, "/* Remainding Iterations */\n");
      fprintf(optimized, "for(%s = %d; %s %s %d; %s %c= 1)\n", var, newStart, var, comparator, end, var, newIncrementOp);
      fprintf(optimized, "{\n");
      while((charsRead = getline(&line, &len, fp)) != -1)
      {
-          printf("Line: %s\n", line);
           if(line[0] == '{') continue;
           if(line[0] == '}') break;
           fprintf(optimized, "%s", line);

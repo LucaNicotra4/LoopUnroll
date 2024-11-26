@@ -1,7 +1,7 @@
 #include "optimizerFunctions2.h"
 
 /* Returns a line with the looping variable being incremented / decremented by the given increment */
-char* incrementLine(char* line, char* var, int increment, int varIndex)
+char* incrementLine(char* line, char* var, int increment, int varIndex, int factor)
 {
      printf("Increment in inc: %d\n", increment);
      char* ptr = line;
@@ -38,11 +38,22 @@ char* incrementLine(char* line, char* var, int increment, int varIndex)
      }
      incrementedLine[length++] = ' ';
      ptr += varIndex + strlen(var); // move pointer past var
-     if(increment >= 0)
+
+     if(factor == 0 || factor == 1)
      {
-          incrementedLine[length++] = '-';
+          if(increment >= 0)
+          {
+               incrementedLine[length++] = '-';
+          }else{
+               incrementedLine[length++] = '+';
+          }
      }else{
-          incrementedLine[length++] = '+';
+          if(increment >= 0)
+          {
+               incrementedLine[length++] = '+';
+          }else{
+               incrementedLine[length++] = '-';
+          }
      }
      incrementedLine[length++] = ' ';
      //convert increment to string

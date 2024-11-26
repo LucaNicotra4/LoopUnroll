@@ -8,6 +8,6 @@
 #include <math.h>
 #include <string.h>
 
-char* incrementLine(char*, char* var, int, int);
+char* incrementLine(char*, char* var, int, int, int);
 
 #endif

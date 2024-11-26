@@ -165,14 +165,11 @@ void forLoopFound(char* forPtr, char* line, int lineNum, int factor, FILE* fp, F
      char *datatype = getDataType(line);
      int start = getStart(line);
      char *var = getVar(line);
-     //printf("%s = %d\n", var, start);
      /* Chunk 2 (Condition) */
      char *comparator = getComparator(line);
      int end = getEnd(line);
-     //printf("%s %s %d\n", var, comparator, end);
      /* Chunk 3 (Inc/Dec) */
      char *alteration = getIncDec(line);
-     //printf("%s%s\n", var, alteration);
      
      /* Convert alteration to digit value (positive for increment, negative for decrement) */
      int increment = getAlterationValue(alteration);
@@ -188,15 +185,16 @@ void forLoopFound(char* forPtr, char* line, int lineNum, int factor, FILE* fp, F
      }else if(factor == 1){ //factor of 4
           unroll(lineNum, fp, optimized, datatype, var, start, comparator, end, incrementOp, increment, factor);
      }else if(factor == 2){ //full unroll
+          unroll(lineNum, fp, optimized, datatype, var, start, comparator, end, incrementOp, increment, factor);
      }
 }
 
 void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, int start, char* comparator, int end, char* incrementOp, int increment, int factor)
 {
-     if(increment < 0) start -= 2; //if increment is negative, ensure that initialized value is dec instead of inc
-
+     //if increment was originally here
      if(factor == 0)
      {
+          if(increment < 0) start -= 2; //if increment is negative, ensure that initialized value is dec instead of inc
           fprintf(optimized, "%s %s;\n", datatype, var);
           fprintf(optimized, "for(%s = %d; %s %s %d; %s %s %d)\n", 
                var, ++start, var, comparator, end, var, incrementOp, abs((increment*2)));
@@ -227,6 +225,9 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
           fprintf(optimized, "{\n"); //Beginning of loop
           printf("Now optimizing: for(%s %s = %d; %s %s %d; %s %s %d)\n",
                datatype, var, start, var, comparator, end, var, incrementOp, abs((increment*4)));
+     }else if(factor == 2)
+     {
+
      }
 
      long startingPoint;
@@ -283,32 +284,59 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
                               if(!isalpha(linePtr[0]) && !isdigit(linePtr[0]))
                               {
                                    /* Print line along with inc/decremented line */
-                                   if(factor == 0)
+                                   if(factor == 0) //unroll by factor of 2
                                    {
                                         fprintf(optimized, "%s", line);
-                                        char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                        char* incrementedLine = incrementLine(line, var, increment, varIndex, factor);
                                         fprintf(optimized, "%s", incrementedLine);
-                                   }else if(factor == 1)
+                                   }else if(factor == 1) //unroll by factor of 4
                                    {
-                                        if(increment >= 0){
+                                        if(increment >= 0)
+                                        {
                                              int temp = increment;
                                              fprintf(optimized, "%s", line);
-                                             char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                             char* incrementedLine = incrementLine(line, var, increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
-                                             incrementedLine = incrementLine(line, var, ++increment, varIndex);
+                                             incrementedLine = incrementLine(line, var, ++increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
-                                             incrementedLine = incrementLine(line, var, ++increment, varIndex);
+                                             incrementedLine = incrementLine(line, var, ++increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
                                              increment = temp;
-                                        }else{
+                                        }else
+                                        {
                                              int temp = increment;
                                              fprintf(optimized, "%s", line);
-                                             char* incrementedLine = incrementLine(line, var, increment, varIndex);
+                                             char* incrementedLine = incrementLine(line, var, increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
-                                             incrementedLine = incrementLine(line, var, --increment, varIndex);
+                                             incrementedLine = incrementLine(line, var, --increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
-                                             incrementedLine = incrementLine(line, var, --increment, varIndex);
+                                             incrementedLine = incrementLine(line, var, --increment, varIndex, factor);
                                              fprintf(optimized, "%s", incrementedLine);
+                                             increment = temp;
+                                        }
+                                   }else if(factor == 2) //fully unroll
+                                   {
+                                        int numIterations = abs(end - start) - 1;
+                                        fprintf(optimized, "%s = %d\n", var, start);
+                                        if(increment >= 0)
+                                        {
+                                             int temp = increment;
+                                             fprintf(optimized, "%s", line);
+                                             for(int i = 0; i < numIterations; i++)
+                                             {
+                                                  char* incrementedLine = incrementLine(line, var, increment++, varIndex, factor);
+                                                  fprintf(optimized, "%s", incrementedLine);
+                                             }
+                                             increment = temp;
+                                        }else
+                                        {
+                                             int temp = increment;
+                                             fprintf(optimized, "%s", line);
+                                             for(int i = 0; i < numIterations; i++)
+                                             {
+                                                  char* incrementedLine = incrementLine(line, var, increment--, varIndex, factor);
+                                                  fprintf(optimized, "%s", incrementedLine);
+                                             }
                                              increment = temp;
                                         }
                                    }
@@ -321,7 +349,7 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
                }
           }
      }
-     fprintf(optimized, "}\n");
+     if(factor != 2) fprintf(optimized, "}\n");
 
      /* Iterate once more if loop has odd number of iterations */
      int newStart;
@@ -333,6 +361,9 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
      {
           if(abs((end - start))%4 == 0) return;
           newStart = end - ((end - start) % 4);
+     }else if(factor == 2)
+     {
+          return;
      }
      long setBack = ftell(fp) - startingPoint;
      char newIncrementOp;
@@ -358,3 +389,34 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
      fprintf(optimized, "}\n");
      return;
 }
+
+// void fullUnroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, int start, char* comparator, int end, char* incrementOp, int increment, int factor)
+// {
+//      int numIterations = abs(end - start);
+//      int startCheck = 1;
+//      char *line = NULL;
+//      size_t len = 0;
+//      ssize_t charsRead;
+//      int bracketCount = 0; //increment for every new loop/statement that is found
+     
+//      while(!feof(fp))
+//      {
+//           if((charsRead = getline(&line, &len, fp)) != -1)
+//           {
+//                if(line[0] == '{')
+//                {
+//                     if(startCheck == 1)
+//                     {
+//                          continue;
+//                          startCheck--;
+//                     }else{
+//                          bracketCount++;
+//                     }
+//                }else if(line[0] == '}')
+//                {
+//                     if(bracketCount-- <= 0) break;
+//                }
+               
+//           }
+//      }
+// }

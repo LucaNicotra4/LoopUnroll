@@ -1,19 +1,24 @@
 int sum = 0;
-int i;
-for(i = 1; i < 10; i += 2)
-{
-     sum += i;
-     sum += i - 1;
-}
 
-int j;
-for(j = 8; j > 0; j -= 2)
-{
+i = 0
+     sum += i;
+     sum += i + 1;
+     sum += i + 2;
+     sum += i + 3;
+     sum += i + 4;
+     sum += i + 5;
+     sum += i + 6;
+     sum += i + 7;
+     sum += i + 8;
+     sum += i + 9;
+
+j = 9
      sum -= j;
-     sum -= j + 1;
-}
-/* Remainding Iterations */
-for(j = 1; j > 0; j -= 1)
-{
-     sum -= j;
-}
+     sum -= j - 1;
+     sum -= j - 2;
+     sum -= j - 3;
+     sum -= j - 4;
+     sum -= j - 5;
+     sum -= j - 6;
+     sum -= j - 7;
+     sum -= j - 8;

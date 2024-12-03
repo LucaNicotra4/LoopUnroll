@@ -340,11 +340,16 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
                                              increment = temp;
                                         }
                                    }
+                              }else
+                              {
+                                   printNormalLines(factor, optimized, line, start, end);
                               }
+                         }else
+                         {
+                              printNormalLines(factor, optimized, line, start, end);
                          }
                     }else{ //duplicate if just another line
-                         fprintf(optimized, "%s", line);
-                         fprintf(optimized, "%s", line);
+                         printNormalLines(factor, optimized, line, start, end);
                     }
                }
           }
@@ -390,33 +395,23 @@ void unroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, i
      return;
 }
 
-// void fullUnroll(int lineNum, FILE* fp, FILE* optimized, char* datatype, char* var, int start, char* comparator, int end, char* incrementOp, int increment, int factor)
-// {
-//      int numIterations = abs(end - start);
-//      int startCheck = 1;
-//      char *line = NULL;
-//      size_t len = 0;
-//      ssize_t charsRead;
-//      int bracketCount = 0; //increment for every new loop/statement that is found
-     
-//      while(!feof(fp))
-//      {
-//           if((charsRead = getline(&line, &len, fp)) != -1)
-//           {
-//                if(line[0] == '{')
-//                {
-//                     if(startCheck == 1)
-//                     {
-//                          continue;
-//                          startCheck--;
-//                     }else{
-//                          bracketCount++;
-//                     }
-//                }else if(line[0] == '}')
-//                {
-//                     if(bracketCount-- <= 0) break;
-//                }
-               
-//           }
-//      }
-// }
+void printNormalLines(int factor, FILE *optimized, char *line, int start, int end)
+{
+     if(factor == 0)
+     {
+          fprintf(optimized, "%s", line);
+          fprintf(optimized, "%s", line);
+     }else if(factor == 1)
+     {
+          fprintf(optimized, "%s", line);
+          fprintf(optimized, "%s", line);
+          fprintf(optimized, "%s", line);
+          fprintf(optimized, "%s", line);
+     }else if(factor == 2)
+     {
+          for(int i = 0; i < (start - end); i++)
+          {
+               fprintf(optimized, "%s", line);
+          }
+     }
+}

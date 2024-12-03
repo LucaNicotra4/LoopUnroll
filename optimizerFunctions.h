@@ -17,5 +17,6 @@ char* getIncDec(const char*);
 int getAlterationValue(char*);
 void forLoopFound(char*, char*, int, int, FILE*, FILE*);
 void unroll(int, FILE*, FILE*, char*, char*, int, char*, int, char*, int, int);
+void printNormalLines(int, FILE*, char*, int, int);
 
 #endif
